@@ -21,7 +21,7 @@ USE H221S3_02ShirleyAscencio;
 
 
 CREATE TABLE student(
-    id_student int IDENTITY(1,1),
+    student_id int IDENTITY(1,1),
 	names varchar(60) NOT NULL,
 	lastname varchar(60) NOT NULL,
 	email varchar(120) NOT NULL UNIQUE,
@@ -30,7 +30,7 @@ CREATE TABLE student(
     document_type char(3) NOT NULL,
     document_number char(9) NOT NULL UNIQUE,
     active char(1) DEFAULT ('A'),
-    CONSTRAINT student_pk PRIMARY KEY (id_student)
+    CONSTRAINT student_pk PRIMARY KEY (student_id)
 )
 GO
 
@@ -155,7 +155,7 @@ GO
 -- Creando tabla Payments (pagos)
 CREATE TABLE Payments (
   id INT PRIMARY KEY,
-  id_student INT,
+  student_id INT,
   Amount DECIMAL(10, 2) CHECK (Amount >= 0),
   Dates DATE CHECK (Dates <= GETDATE()),
   Descriptions VARCHAR(100),
@@ -164,13 +164,13 @@ CREATE TABLE Payments (
   PaymentStatus VARCHAR(20) CHECK (PaymentStatus IN ('Pendiente', 'Pagado', 'Cancelado')),
   PaymentType VARCHAR(50) CHECK (PaymentType IN ('Matrícula', 'Mensualidad', 'Inscripción', 'Otros')),
   PaymentReceipt VARCHAR(100),
-  FOREIGN KEY (id_student) REFERENCES student(id_student),
+  FOREIGN KEY (student_id) REFERENCES student(student_id),
   CONSTRAINT id_Unique UNIQUE (id)
 );
 
 
 -- Insertando registros a tabla pagos
-INSERT INTO Payments (id, id_student, Amount, Dates, Descriptions, PaymentMethod, ReferenceNumber, PaymentStatus, PaymentType, PaymentReceipt)
+INSERT INTO Payments (id, student_id, Amount, Dates, Descriptions, PaymentMethod, ReferenceNumber, PaymentStatus, PaymentType, PaymentReceipt)
 VALUES
  (1, 1, 500.00, '2023-06-15', 'Matrícula', 'Tarjeta de Crédito', 'ABC123', 'Pagado', 'Matrícula', NULL),
  (2, 2, 750.00, '2023-07-01', 'Pago de Mensualidad', 'Transferencia Bancaria', 'XYZ789', 'Pendiente', 'Mensualidad', NULL),
@@ -186,7 +186,7 @@ GO
 CREATE VIEW VistaPagos AS
 SELECT
   id AS ID_Pago,
-  id_student AS ID_Estudiante,
+  student_id AS ID_Estudiante,
   Amount AS Monto,
   Dates AS Fecha,
   Descriptions AS Descripcion,
