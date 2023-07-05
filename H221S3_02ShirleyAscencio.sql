@@ -1,15 +1,9 @@
 
-USE master;
-DROP DATABASE IF EXISTS H221S3_02ShirleyAscencio;
-
-CREATE DATABASE H221S3_02ShirleyAscencio;
-USE H221S3_02ShirleyAscencio;
-
----Configuramos el idioma de la base de datos a español
-SET LANGUAGE Español
+---Configuramos el idioma de la base de datos a espaÃ±ol
+SET LANGUAGE EspaÃ±ol
 GO
 
---Ver idioma de SQL Server 
+--Ver idioma de SQL Server
 SELECT @@language AS 'Idioma'
 GO
 
@@ -19,8 +13,15 @@ SET DATEFORMAT dmy
 SELECT sysdatetime() as 'Fecha y  hora'
 GO
 
+USE master;
+DROP DATABASE IF EXISTS H221S3_02ShirleyAscencio;
+
+CREATE DATABASE H221S3_02ShirleyAscencio;
+USE H221S3_02ShirleyAscencio;
+
+
 CREATE TABLE student(
-    student_id int IDENTITY(1,1),
+    id_student int IDENTITY(1,1),
 	names varchar(60) NOT NULL,
 	lastname varchar(60) NOT NULL,
 	email varchar(120) NOT NULL UNIQUE,
@@ -29,7 +30,7 @@ CREATE TABLE student(
     document_type char(3) NOT NULL,
     document_number char(9) NOT NULL UNIQUE,
     active char(1) DEFAULT ('A'),
-    CONSTRAINT student_pk PRIMARY KEY (student_id)
+    CONSTRAINT student_pk PRIMARY KEY (id_student)
 )
 GO
 
@@ -53,7 +54,7 @@ GO
 
 -- Agregando restriccion de tipo de documento
 ALTER TABLE student
-         ADD CONSTRAINT document_number_check 
+         ADD CONSTRAINT document_number_check
         CHECK ((document_type = 'DNI' AND LEN(document_number) = 8) OR
         (document_type = 'CNE' AND LEN(document_number) = 9));
 
@@ -63,32 +64,8 @@ ALTER TABLE student
 GO
 
 ALTER TABLE student
-	ADD CONSTRAINT states_student 
+	ADD CONSTRAINT states_student
 	CHECK(active ='A' OR active ='I')
-GO
-
----No permite eliminar un registro si esta activo con disparador trigger
--- Crear el disparador (trigger)
-CREATE TRIGGER active_student_trigger
-ON student
-INSTEAD OF DELETE
-AS
-BEGIN
-    -- Verificar si hay intento de eliminar un registro activo
-    IF EXISTS (
-        SELECT * FROM deleted WHERE active = 'A'
-    )
-    BEGIN
-        RAISERROR ('No se permite eliminar registros activos.', 16, 1)
-        ROLLBACK TRANSACTION
-        RETURN
-    END
-    ELSE
-    BEGIN
-        DELETE FROM student
-        WHERE student_id IN (SELECT student_id FROM deleted)
-    END
-END
 GO
 
 
@@ -98,8 +75,10 @@ INSERT INTO student
 VALUES
 		('Jose Megun', 'Cama la madrid','jose.cama@gmail.com','Analisis de sistemas', 'Primero','CNE', '739314781'),
 		('Gabriel Esteban', 'Gutierrez Quispe','gabriel.gutierrez@gmail.com','Analisis de sistemas', 'Primero','DNI', '56743973'),
-		('Mario luis', 'Flores Huaman','mario.flores@gmail.com','Analisis de sistemas', 'Primero','CNE', '675484752')
-	GO	
+		('Mario luis', 'Flores Huaman','mario.flores@gmail.com','Analisis de sistemas', 'Primero','CNE', '675484752'),
+		('Jose Armando', 'Flores Junes','jose.armando@gmail.com','Analisis de sistemas', 'quinto','DNI', '12345678'),
+		('Maria Vicente', 'Luyo Luyo','maria.vicente@gmail.com','Analisis de sistemas', 'tercero','DNI', '87654321')
+	GO
 
 -- Listamos la tabla estudiante.
 SELECT * FROM student
@@ -110,11 +89,10 @@ CREATE VIEW lista_student AS
 SELECT names AS NOMBRES,
        lastname AS APELLIDOS,
        email AS CORREO,
-	   cellphone AS TELEFONO,
        career AS CARRERA,
        semester AS SEMESTRE,
        document_type AS 'DNI O CNE',
-       document_number AS 'N° DOCUMENTO',
+       document_number AS 'NÂ° DOCUMENTO',
        CASE
            WHEN active = 'A' THEN 'Activo'
            WHEN active = 'I' THEN 'Inactivo'
@@ -145,20 +123,23 @@ CREATE TABLE administrative (
 INSERT INTO administrative
 		(document_type, document_number, names, lastnames, type_charge)
 VALUES
-		('DNI', '46583952', 'Luis', 'Correa Candela', 'AUXILIAR'),
-		('CNE', '758390567', 'Miguel Rody', 'Mendieta Espinoza', 'TEC. ADMINIST'),
-		('DNI', '45334632', 'Alfredo', 'Cabana Ramos', 'PERS. DE SERV')
+		('DNI', '46583952', 'Luis', 'Correa Candela', 'Tesorero'),
+		('CNE', '758390567', 'Miguel Rody', 'Mendieta Espinoza', 'Tesorero'),
+		('DNI', '12345788', 'Alfreda', 'cabello matos', 'Tesorera'),
+		('CNE', '174936437', 'jose', 'lucio Rosas', 'Tesorero'),
+		('DNI', '87493458', 'shirley', 'ascencio luyo', 'Tesorera'),
+		('CNE', '534673827', 'jennyfer', 'luyo flores', 'Tesorera')
 	GO
 
--- Listamos la tabla 
+-- Listamos la tabla
 
 SELECT * FROM administrative
 GO
 
---Listado de tabla administrative 
+--Listado de tabla administrative
 CREATE VIEW lista_administrative AS
 SELECT document_type AS 'Tipo de Documento',
-       document_number AS 'N° Documento',
+       document_number AS 'NÂ° Documento',
        names AS Nombres,
        lastnames AS Apellidos,
        type_charge AS 'Tipo de Cargo'
@@ -166,12 +147,9 @@ FROM administrative;
 GO
 
 
---Listamos por vista de tabla admiistrative 
+--Listamos por vis ta de tabla admiistrative
 SELECT * FROM lista_administrative;
 GO
-
-
-
 
 
 -- Creando tabla Payments (pagos)
@@ -184,9 +162,9 @@ CREATE TABLE Payments (
   PaymentMethod VARCHAR(50),
   ReferenceNumber VARCHAR(50),
   PaymentStatus VARCHAR(20) CHECK (PaymentStatus IN ('Pendiente', 'Pagado', 'Cancelado')),
-  PaymentType VARCHAR(50) CHECK (PaymentType IN ('Matrícula', 'Mensualidad', 'Inscripción', 'Otros')),
-  PaymentReceipt VARCHAR(100), 
-  FOREIGN KEY (id_student) REFERENCES student(id),
+  PaymentType VARCHAR(50) CHECK (PaymentType IN ('MatrÃ­cula', 'Mensualidad', 'InscripciÃ³n', 'Otros')),
+  PaymentReceipt VARCHAR(100),
+  FOREIGN KEY (id_student) REFERENCES student(id_student),
   CONSTRAINT id_Unique UNIQUE (id)
 );
 
@@ -194,12 +172,12 @@ CREATE TABLE Payments (
 -- Insertando registros a tabla pagos
 INSERT INTO Payments (id, id_student, Amount, Dates, Descriptions, PaymentMethod, ReferenceNumber, PaymentStatus, PaymentType, PaymentReceipt)
 VALUES
- (1, 1, 500.00, '2023-06-15', 'Matrícula', 'Tarjeta de Crédito', 'ABC123', 'Pagado', 'Matrícula', NULL),
+ (1, 1, 500.00, '2023-06-15', 'MatrÃ­cula', 'Tarjeta de CrÃ©dito', 'ABC123', 'Pagado', 'MatrÃ­cula', NULL),
  (2, 2, 750.00, '2023-07-01', 'Pago de Mensualidad', 'Transferencia Bancaria', 'XYZ789', 'Pendiente', 'Mensualidad', NULL),
- (3, 3, 250.00, '2023-06-30', 'Cuota de Inscripción', 'Efectivo', 'DEF456', 'Pagado', 'Inscripción', NULL);
- 
+ (3, 3, 250.00, '2023-06-30', 'Cuota de InscripciÃ³n', 'Efectivo', 'DEF456', 'Pagado', 'InscripciÃ³n', NULL);
 
--- Listamos la tabla 
+
+-- Listamos la tabla
 
 SELECT * FROM Payments
 GO
@@ -219,7 +197,7 @@ SELECT
   PaymentReceipt AS ComprobantePago
 FROM Payments;
 GO
---Listamos por vista de tabla Payments (pagos) 
+--Listamos por vista de tabla Payments (pagos)
 SELECT * FROM VistaPagos;
 GO
 
